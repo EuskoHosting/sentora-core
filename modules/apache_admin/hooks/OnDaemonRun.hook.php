@@ -92,7 +92,7 @@ function WriteVhostConfigFile()
           $line .= "Listen " . $port . fs_filehandler::NewLine();
         }
     }
-  
+
     $line .= "Listen 443" . fs_filehandler::NewLine();
 
     $line .= fs_filehandler::NewLine();
@@ -366,30 +366,30 @@ function WriteVhostConfigFile()
                 $line .= "# Custom VH settings (if any exist)" . fs_filehandler::NewLine();
                 $line .= $rowvhost['vh_custom_tx'] . fs_filehandler::NewLine();
 
-              
+
               // End Virtual Host Settings
                 $line .= "################################################################" . fs_filehandler::NewLine();
                 $line .= "</virtualhost>" . fs_filehandler::NewLine();
                 $line .= "#END HTTP: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
-              
-              
+
+
               /*
-              
-              
-              
-              
+
+
+
+
               END HTTP
-              
+
               BEGIN HTTPS!
-              
-              
-              
-              
-              
+
+
+
+
+
               */
-              
-              
-              
+
+
+
                 $line .= "################################################################" . fs_filehandler::NewLine();
                 $line .= "#Start HTTPS" . fs_filehandler::NewLine();
                 $line .= "################################################################" . fs_filehandler::NewLine();
@@ -429,13 +429,13 @@ function WriteVhostConfigFile()
                 $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . "domains/" . $vhostuser['username'] . "/" . $rowvhost['vh_name_vc'] . '-bandwidth.log" ' . ctrl_options::GetSystemOption('bandwidth_log_format') . fs_filehandler::NewLine();
 
                 // Directory options
-               /* $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
+                $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
                 $line .= "  Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
                 $line .= "  AllowOverride All" . fs_filehandler::NewLine();
                 $line .= "  Order Allow,Deny" . fs_filehandler::NewLine();
                 $line .= "  Allow from all" . fs_filehandler::NewLine();
                 $line .= "</Directory>" . fs_filehandler::NewLine();
-*/
+                
                 // Get Package php and cgi enabled options
                 $rows = $zdbh->prepare("SELECT * FROM x_packages WHERE pk_id_pk=:packageid AND pk_deleted_ts IS NULL");
                 $rows->bindParam(':packageid', $vhostuser['packageid']);
@@ -479,14 +479,14 @@ function WriteVhostConfigFile()
                 // Client custom vh entry
                 $line .= "# Custom VH settings (if any exist)" . fs_filehandler::NewLine();
                 $line .= $rowvhost['vh_custom_tx'] . fs_filehandler::NewLine();
-                
-                
-              
+
+
+
               // SSL Auto Activated.
-                $sslenabled = true;  
+                $sslenabled = true;
                 if($sslenabled){
                   $certpath = "/etc/letsencrypt/live/" .  $rowvhost['vh_name_vc'];
-                  if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){ 
+                  if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){
                     $command = ctrl_options::GetSystemOption('zsudo');
                     $serveralias = ( $rowvhost['vh_type_in'] == 2 ) ? '' : " www." . $rowvhost['vh_name_vc'];
                     $certbot_path = "/usr/bin/certbot-auto";
@@ -496,7 +496,7 @@ function WriteVhostConfigFile()
                         "--apache",
                         "-d ".$rowvhost['vh_name_vc'],
                         "-n"
-                      ); 
+                      );
                     } else {
                       $args = array(
                         "certonly",
@@ -504,7 +504,7 @@ function WriteVhostConfigFile()
                         "-d ".$rowvhost['vh_name_vc'],
                         "-d ".$serveralias,
                         "-n"
-                      ); 
+                      );
 
                     }
                     echo "Executed certbot for " . $rowvhost["vh_name_vc"] . "\n";
@@ -516,15 +516,15 @@ function WriteVhostConfigFile()
                     echo "Certbot ommited for " . $rowvhost["vh_name_vc"] . "\n";
                     // echo " --------------- " . "\n";
                   }
-                  
+
                   /*
                     Start writing SSL config to vhost file
-                  
+
                   */
                   //$line .= "<If \"-f '/etc/letsencrypt/live/" . $rowvhost['vh_name_vc'] . "/README'\">" . fs_filehandler::NewLine(); // If is not prepared for initial load. Not supported. So, must do it from PHP
-                  
-                  
-                  if(is_dir($certpath)){  
+
+
+                  if(is_dir($certpath)){
                     $line .= "  SSLEngine on" .  fs_filehandler::NewLine();
                     $line .= "  SSLProtocol ALL -SSLv2 -SSLv3" .  fs_filehandler::NewLine();
                     $line .= "  SSLHonorCipherOrder On" .  fs_filehandler::NewLine();
@@ -544,13 +544,13 @@ function WriteVhostConfigFile()
                     echo "#####";
                   }
                 }
-              
+
                 $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
                 $line .= "################################################################" . fs_filehandler::NewLine();
                 $line .= "</virtualhost>" . fs_filehandler::NewLine();
                 $line .= fs_filehandler::NewLine();
-                
-              
+
+
                 if ($rowvhost['vh_portforward_in'] <> 0) {
                     $line .= BuildVhostPortForward($rowvhost['vh_name_vc'], $vhostPort, $useremail);
                 }
@@ -610,7 +610,7 @@ function WriteVhostConfigFile()
         if (sys_versions::ShowOSPlatformVersion() == "Windows") {
             system("" . ctrl_options::GetSystemOption('httpd_exe') . " " . ctrl_options::GetSystemOption('apache_restart') . "", $returnValue);
         } else {
-            
+
             $command = ctrl_options::GetSystemOption('zsudo');
             $args = array(
                 "service",
