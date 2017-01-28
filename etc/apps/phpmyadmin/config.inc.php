@@ -1,0 +1,1 @@
+/etc/sentora/configs/phpmyadmin/config.inc.php
