@@ -5,4 +5,5 @@ if [[ $EUID -ne 0 ]]; then
 fi
 wget https://dl.eff.org/certbot-auto -O /usr/bin/certbot-auto
 chmod +x /usr/bin/certbot-auto
+a2enmod ssl
 /usr/bin/certbot-auto --agree-tos register
