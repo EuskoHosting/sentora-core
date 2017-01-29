@@ -394,7 +394,7 @@ function WriteVhostConfigFile()
                 $line .= "#Start HTTPS" . fs_filehandler::NewLine();
                 $line .= "################################################################" . fs_filehandler::NewLine();
                 $line .= "# HTTP. " . fs_filehandler::NewLine();
-                $line .= "<virtualhost " . $vhostIp . ":443>" . fs_filehandler::NewLine();
+                $line .= "<virtualhost _default_:443>" . fs_filehandler::NewLine();
 
                 /*
                  * todo
