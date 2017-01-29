@@ -318,7 +318,7 @@ function WriteVhostConfigFile()
                 // Directory options
                 $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
                 $line .= "  Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
-                $line .= "  AllowOverride All" . fs_filehandler::NewLine();
+                $line .= "  AllowOverride None" . fs_filehandler::NewLine();
                 $line .= "  Require all granted" . fs_filehandler::NewLine();
                 $line .= "</Directory>" . fs_filehandler::NewLine();
 
@@ -431,11 +431,10 @@ function WriteVhostConfigFile()
                 // Directory options
                 $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
                 $line .= "  Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
-                $line .= "  AllowOverride All" . fs_filehandler::NewLine();
-                $line .= "  Order Allow,Deny" . fs_filehandler::NewLine();
-                $line .= "  Allow from all" . fs_filehandler::NewLine();
+                $line .= "  AllowOverride None" . fs_filehandler::NewLine();
+                $line .= "  Require all granted" . fs_filehandler::NewLine();
                 $line .= "</Directory>" . fs_filehandler::NewLine();
-                
+
                 // Get Package php and cgi enabled options
                 $rows = $zdbh->prepare("SELECT * FROM x_packages WHERE pk_id_pk=:packageid AND pk_deleted_ts IS NULL");
                 $rows->bindParam(':packageid', $vhostuser['packageid']);
