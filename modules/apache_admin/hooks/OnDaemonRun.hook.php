@@ -1,4 +1,7 @@
 <?php
+
+$sslenabled = true;
+
 echo fs_filehandler::NewLine() . "START Apache Config Hook." . fs_filehandler::NewLine();
 if (ui_module::CheckModuleEnabled('Apache Config')) {
     echo "Apache Admin module ENABLED..." . fs_filehandler::NewLine();
@@ -48,7 +51,7 @@ function BuildVhostPortForward($vhostName, $customPort, $userEmail)
 function WriteVhostConfigFile()
 {
     global $zdbh;
-
+    global $sslenabled;
     //Get email for server admin of Sentora
     $getserveremail = $zdbh->query("SELECT ac_email_vc FROM x_accounts where ac_id_pk=1")->fetch();
     $serveremail = ( $getserveremail['ac_email_vc'] != "" ) ? $getserveremail['ac_email_vc'] : "postmaster@" . ctrl_options::GetSystemOption('sentora_domain');
@@ -92,38 +95,99 @@ function WriteVhostConfigFile()
           $line .= "Listen " . $port . fs_filehandler::NewLine();
         }
     }
-
-    $line .= "Listen 443" . fs_filehandler::NewLine();
-
-    $line .= fs_filehandler::NewLine();
-    $line .= "# Configuration for Sentora control panel." . fs_filehandler::NewLine();
-    $line .= "<VirtualHost *:" . ctrl_options::GetSystemOption('sentora_port') . ">" . fs_filehandler::NewLine();
-    $line .= "ServerAdmin " . $serveremail . fs_filehandler::NewLine();
-    $line .= 'DocumentRoot "' . ctrl_options::GetSystemOption('sentora_root') . '"' . fs_filehandler::NewLine();
-    $line .= "ServerName " . ctrl_options::GetSystemOption('sentora_domain') . fs_filehandler::NewLine();
-    $line .= 'ErrorLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-error.log" ' . fs_filehandler::NewLine();
-    $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-access.log" ' . ctrl_options::GetSystemOption('access_log_format') . fs_filehandler::NewLine();
-    $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-bandwidth.log" ' . ctrl_options::GetSystemOption('bandwidth_log_format') . fs_filehandler::NewLine();
-    $line .= "AddType application/x-httpd-php .php" . fs_filehandler::NewLine();
-    $line .= '<Directory "' . ctrl_options::GetSystemOption('sentora_root') . '">' . fs_filehandler::NewLine();
-    $line .= "Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
-    $line .= "    AllowOverride All" . fs_filehandler::NewLine();
-
-    if ((double) sys_versions::ShowApacheVersion() < 2.4) {
-        $line .= "    Require all granted" . fs_filehandler::NewLine();
-    } else {
-        $line .= "    Require all granted" . fs_filehandler::NewLine();
+    if($sslenabled){
+      $line .= "Listen 443" . fs_filehandler::NewLine();
     }
 
-    $line .= "</Directory>" . fs_filehandler::NewLine();
-    $line .= fs_filehandler::NewLine();
-    $line .= "# Custom settings are loaded below this line (if any exist)" . fs_filehandler::NewLine();
+    $certpath = "/etc/letsencrypt/live/" .  ctrl_options::GetSystemOption('sentora_domain');
+    
+    if($sslenabled && !is_dir($certpath) && count(dns_get_record(ctrl_options::GetSystemOption('sentora_domain'))) > 0){
+      $certbot_path = "/usr/bin/certbot-auto";
+        $args = array(
+          "certonly",
+          "--apache",
+          "-d ".ctrl_options::GetSystemOption('sentora_domain'),
+          "-n"
+        );
+      echo "Executed certbot for " . ctrl_options::GetSystemOption('sentora_domain') . "\n";
+      echo " --------------- " . "\n";
+      echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
+      echo " --------------- " . "\n";
+    }
 
-    // Global custom Sentora entry
-    $line .= ctrl_options::GetSystemOption('global_zpcustom') . fs_filehandler::NewLine();
+    if($sslenabled && is_dir($certpath)){
 
-    $line .= "</VirtualHost>" . fs_filehandler::NewLine();
+      $line .= fs_filehandler::NewLine();
+      $line .= "# Configuration for Sentora control panel." . fs_filehandler::NewLine();
+      $line .= "<VirtualHost *:443>" . fs_filehandler::NewLine();
+      $line .= "ServerAdmin " . $serveremail . fs_filehandler::NewLine();
+      $line .= 'DocumentRoot "' . ctrl_options::GetSystemOption('sentora_root') . '"' . fs_filehandler::NewLine();
+      $line .= "ServerName " . ctrl_options::GetSystemOption('sentora_domain') . fs_filehandler::NewLine();
+      $line .= 'ErrorLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-error.log" ' . fs_filehandler::NewLine();
+      $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-access.log" ' . ctrl_options::GetSystemOption('access_log_format') . fs_filehandler::NewLine();
+      $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-bandwidth.log" ' . ctrl_options::GetSystemOption('bandwidth_log_format') . fs_filehandler::NewLine();
+      $line .= "AddType application/x-httpd-php .php" . fs_filehandler::NewLine();
+      $line .= '<Directory "' . ctrl_options::GetSystemOption('sentora_root') . '">' . fs_filehandler::NewLine();
+      $line .= "Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
+      $line .= "    AllowOverride All" . fs_filehandler::NewLine();
 
+      if ((double) sys_versions::ShowApacheVersion() < 2.4) {
+          $line .= "    Require all granted" . fs_filehandler::NewLine();
+      } else {
+          $line .= "    Require all granted" . fs_filehandler::NewLine();
+      }
+
+      $line .= "</Directory>" . fs_filehandler::NewLine();
+      $line .= fs_filehandler::NewLine();
+
+      $line .= "  SSLEngine on" .  fs_filehandler::NewLine();
+      $line .= "  SSLProtocol ALL -SSLv2 -SSLv3" .  fs_filehandler::NewLine();
+      $line .= "  SSLHonorCipherOrder On" .  fs_filehandler::NewLine();
+      $line .= "  SSLCipherSuite ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA" .  fs_filehandler::NewLine();;
+      $line .= "  SSLCertificateFile " . $certpath . "/cert.pem" .  fs_filehandler::NewLine();
+      $line .= "  SSLCertificateKeyFile " . $certpath . "/privkey.pem" .  fs_filehandler::NewLine();
+      $line .= "  SSLCertificateChainFile " . $certpath . "/chain.pem" .  fs_filehandler::NewLine();
+      //$line .= "  #SSLOptions +StrictRequire" .  fs_filehandler::NewLine();
+      //$line .= "  # Requires Apache >= 2.4" .  fs_filehandler::NewLine();
+      $line .= "  SSLCompression off" .  fs_filehandler::NewLine();
+      //$line .= "</If>" .  fs_filehandler::NewLine();
+
+      // Global custom Sentora entry
+      $line .= ctrl_options::GetSystemOption('global_zpcustom') . fs_filehandler::NewLine();
+
+      $line .= "</VirtualHost>" . fs_filehandler::NewLine();
+
+    } else {
+      $line .= fs_filehandler::NewLine();
+      $line .= "# Configuration for Sentora control panel." . fs_filehandler::NewLine();
+      $line .= "<VirtualHost *:" . ctrl_options::GetSystemOption('sentora_port') . ">" . fs_filehandler::NewLine();
+      $line .= "ServerAdmin " . $serveremail . fs_filehandler::NewLine();
+      $line .= 'DocumentRoot "' . ctrl_options::GetSystemOption('sentora_root') . '"' . fs_filehandler::NewLine();
+      $line .= "ServerName " . ctrl_options::GetSystemOption('sentora_domain') . fs_filehandler::NewLine();
+      $line .= 'ErrorLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-error.log" ' . fs_filehandler::NewLine();
+      $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-access.log" ' . ctrl_options::GetSystemOption('access_log_format') . fs_filehandler::NewLine();
+      $line .= 'CustomLog "' . ctrl_options::GetSystemOption('log_dir') . 'sentora-bandwidth.log" ' . ctrl_options::GetSystemOption('bandwidth_log_format') . fs_filehandler::NewLine();
+      $line .= "AddType application/x-httpd-php .php" . fs_filehandler::NewLine();
+      $line .= '<Directory "' . ctrl_options::GetSystemOption('sentora_root') . '">' . fs_filehandler::NewLine();
+      $line .= "Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
+      $line .= "    AllowOverride All" . fs_filehandler::NewLine();
+
+      if ((double) sys_versions::ShowApacheVersion() < 2.4) {
+          $line .= "    Require all granted" . fs_filehandler::NewLine();
+      } else {
+          $line .= "    Require all granted" . fs_filehandler::NewLine();
+      }
+
+      $line .= "</Directory>" . fs_filehandler::NewLine();
+      $line .= fs_filehandler::NewLine();
+      $line .= "# Custom settings are loaded below this line (if any exist)" . fs_filehandler::NewLine();
+
+      // Global custom Sentora entry
+      $line .= ctrl_options::GetSystemOption('global_zpcustom') . fs_filehandler::NewLine();
+
+      $line .= "</VirtualHost>" . fs_filehandler::NewLine();
+
+    }
     $line .= fs_filehandler::NewLine();
     $line .= "################################################################" . fs_filehandler::NewLine();
     $line .= "# Sentora generated VHOST configurations below....." . fs_filehandler::NewLine();
@@ -388,7 +452,7 @@ function WriteVhostConfigFile()
 
               */
               // SSL Auto Activated.
-                $sslenabled = true;
+
                 if($sslenabled){
                   $certpath = "/etc/letsencrypt/live/" .  $rowvhost['vh_name_vc'];
                   if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){
