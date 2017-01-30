@@ -318,7 +318,7 @@ function WriteVhostConfigFile()
                 // Directory options
                 $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
                 $line .= "  Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
-                $line .= "  AllowOverride None" . fs_filehandler::NewLine();
+                $line .= "  AllowOverride All" . fs_filehandler::NewLine();
                 $line .= "  Require all granted" . fs_filehandler::NewLine();
                 $line .= "</Directory>" . fs_filehandler::NewLine();
 
@@ -387,7 +387,49 @@ function WriteVhostConfigFile()
 
 
               */
+              // SSL Auto Activated.
+                $sslenabled = true;
+                if($sslenabled){
+                  $certpath = "/etc/letsencrypt/live/" .  $rowvhost['vh_name_vc'];
+                  if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){
+                    $command = ctrl_options::GetSystemOption('zsudo');
+                    $serveralias = ( $rowvhost['vh_type_in'] == 2 ) ? '' : " www." . $rowvhost['vh_name_vc'];
+                    $certbot_path = "/usr/bin/certbot-auto";
+                    if (empty($serveralias)){
+                      $args = array(
+                        "certonly",
+                        "--apache",
+                        "-d ".$rowvhost['vh_name_vc'],
+                        "-n"
+                      );
+                    } else {
+                      $args = array(
+                        "certonly",
+                        "--apache",
+                        "-d ".$rowvhost['vh_name_vc'],
+                        "-d ".$serveralias,
+                        "-n"
+                      );
 
+                    }
+                    echo "Executed certbot for " . $rowvhost["vh_name_vc"] . "\n";
+                    echo " --------------- " . "\n";
+                    echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
+                    echo " --------------- " . "\n";
+                  } else {
+                    echo " --------------- " . "\n";
+                    echo "Certbot ommited for " . $rowvhost["vh_name_vc"] . "\n";
+                    // echo " --------------- " . "\n";
+                  }
+
+                  /*
+                    Start writing SSL config to vhost file
+
+                  */
+                  //$line .= "<If \"-f '/etc/letsencrypt/live/" . $rowvhost['vh_name_vc'] . "/README'\">" . fs_filehandler::NewLine(); // If is not prepared for initial load. Not supported. So, must do it from PHP
+
+
+                  if(is_dir($certpath)){
 
 
                 $line .= "################################################################" . fs_filehandler::NewLine();
@@ -431,7 +473,7 @@ function WriteVhostConfigFile()
                 // Directory options
                 $line .= '<Directory ' . $RootDir . '>' . fs_filehandler::NewLine();
                 $line .= "  Options +FollowSymLinks -Indexes" . fs_filehandler::NewLine();
-                $line .= "  AllowOverride None" . fs_filehandler::NewLine();
+                $line .= "  AllowOverride All" . fs_filehandler::NewLine();
                 $line .= "  Require all granted" . fs_filehandler::NewLine();
                 $line .= "</Directory>" . fs_filehandler::NewLine();
 
@@ -481,49 +523,7 @@ function WriteVhostConfigFile()
 
 
 
-              // SSL Auto Activated.
-                $sslenabled = true;
-                if($sslenabled){
-                  $certpath = "/etc/letsencrypt/live/" .  $rowvhost['vh_name_vc'];
-                  if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){
-                    $command = ctrl_options::GetSystemOption('zsudo');
-                    $serveralias = ( $rowvhost['vh_type_in'] == 2 ) ? '' : " www." . $rowvhost['vh_name_vc'];
-                    $certbot_path = "/usr/bin/certbot-auto";
-                    if (empty($serveralias)){
-                      $args = array(
-                        "certonly",
-                        "--apache",
-                        "-d ".$rowvhost['vh_name_vc'],
-                        "-n"
-                      );
-                    } else {
-                      $args = array(
-                        "certonly",
-                        "--apache",
-                        "-d ".$rowvhost['vh_name_vc'],
-                        "-d ".$serveralias,
-                        "-n"
-                      );
 
-                    }
-                    echo "Executed certbot for " . $rowvhost["vh_name_vc"] . "\n";
-                    echo " --------------- " . "\n";
-                    echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
-                    echo " --------------- " . "\n";
-                  } else {
-                    echo " --------------- " . "\n";
-                    echo "Certbot ommited for " . $rowvhost["vh_name_vc"] . "\n";
-                    // echo " --------------- " . "\n";
-                  }
-
-                  /*
-                    Start writing SSL config to vhost file
-
-                  */
-                  //$line .= "<If \"-f '/etc/letsencrypt/live/" . $rowvhost['vh_name_vc'] . "/README'\">" . fs_filehandler::NewLine(); // If is not prepared for initial load. Not supported. So, must do it from PHP
-
-
-                  if(is_dir($certpath)){
                     $line .= "  SSLEngine on" .  fs_filehandler::NewLine();
                     $line .= "  SSLProtocol ALL -SSLv2 -SSLv3" .  fs_filehandler::NewLine();
                     $line .= "  SSLHonorCipherOrder On" .  fs_filehandler::NewLine();
