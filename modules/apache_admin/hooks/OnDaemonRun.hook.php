@@ -100,7 +100,7 @@ function WriteVhostConfigFile()
     }
 
     $certpath = "/etc/letsencrypt/live/" .  ctrl_options::GetSystemOption('sentora_domain');
-    
+
     if($sslenabled && !is_dir($certpath) && count(dns_get_record(ctrl_options::GetSystemOption('sentora_domain'))) > 0){
       $certbot_path = "/usr/bin/certbot-auto";
         $args = array(
@@ -606,12 +606,14 @@ function WriteVhostConfigFile()
                     echo "##### CAUTION! NO CERT FOR " . $rowvhost['vh_name_vc'];
                     echo "#####";
                   }
+
+
+                  $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
+                  $line .= "################################################################" . fs_filehandler::NewLine();
+                  $line .= "</virtualhost>" . fs_filehandler::NewLine();
+                  $line .= fs_filehandler::NewLine();
                 }
 
-                $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
-                $line .= "################################################################" . fs_filehandler::NewLine();
-                $line .= "</virtualhost>" . fs_filehandler::NewLine();
-                $line .= fs_filehandler::NewLine();
 
 
                 if ($rowvhost['vh_portforward_in'] <> 0) {
