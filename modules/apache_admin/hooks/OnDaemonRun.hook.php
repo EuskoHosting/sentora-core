@@ -51,7 +51,7 @@ function BuildVhostPortForward($vhostName, $customPort, $userEmail)
 function WriteVhostConfigFile()
 {
     global $zdbh;
-    global $sslenabled;
+    $sslenabled = true;
     //Get email for server admin of Sentora
     $getserveremail = $zdbh->query("SELECT ac_email_vc FROM x_accounts where ac_id_pk=1")->fetch();
     $serveremail = ( $getserveremail['ac_email_vc'] != "" ) ? $getserveremail['ac_email_vc'] : "postmaster@" . ctrl_options::GetSystemOption('sentora_domain');
@@ -91,7 +91,7 @@ function WriteVhostConfigFile()
 
     # Listen is mandatory for each port <> 80 (80 is defined in system config)
     foreach ($customPortList as $port) {
-        if($port !== 443){
+        if($port !== 443 || !$sslenabled){
           $line .= "Listen " . $port . fs_filehandler::NewLine();
         }
     }
