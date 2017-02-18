@@ -34,6 +34,10 @@ function resolvableDomain($d){
 function executeCertBot($d1, $d2 = false){
   global $certbot_path;
   global $certbot_certpath;
+  
+  $d1 = trim($d1);
+  $d2 = trim($d2);
+
   if(empty($d2) || $d2 === false){
     $args = array(
         "certonly",
@@ -512,7 +516,7 @@ function WriteVhostConfigFile()
 
                   */
 
-                  if(is_dir($certpath)){
+            if(is_dir($certpath)){
 
 
                 $line .= "################################################################" . fs_filehandler::NewLine();
@@ -622,10 +626,10 @@ function WriteVhostConfigFile()
                     $line .= fs_filehandler::NewLine();
                   } else {
                     // ERROR!! No SSL FILE FOUND!
-                    echo "#######################################################";
-                    echo "#####";
-                    echo "##### CAUTION! NO CERT FOR " . $rowvhost['vh_name_vc'];
-                    echo "#####";
+                    echo "#######################################################" . "\n";
+                    echo "#####". "\n";
+                    echo "##### CAUTION! NO CERT FOR " . $rowvhost['vh_name_vc']. "\n";
+                    echo "#####". "\n";
                   }
 
 
