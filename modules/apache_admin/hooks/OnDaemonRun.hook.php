@@ -58,6 +58,7 @@ function executeCertBot($d1, $d2 = false){
     echo "---***---***---" . "\n";
     echo "Domain '".$d1."' or '".$d2."' not resolvable" . "\n";
     echo "---***---***---" . "\n";
+    echo "\n";
     return false;
 
   } else {
@@ -511,7 +512,7 @@ function WriteVhostConfigFile()
 
                   */
 
-                  if(is_dir($certpath) && resolvableDomain($domain)){
+                  if(is_dir($certpath)){
 
 
                 $line .= "################################################################" . fs_filehandler::NewLine();
@@ -617,6 +618,8 @@ function WriteVhostConfigFile()
                     //$line .= "  # Requires Apache >= 2.4" .  fs_filehandler::NewLine();
                     $line .= "  SSLCompression off" .  fs_filehandler::NewLine();
                     //$line .= "</If>" .  fs_filehandler::NewLine();
+                    $line .= "</virtualhost>" . fs_filehandler::NewLine();
+                    $line .= fs_filehandler::NewLine();
                   } else {
                     // ERROR!! No SSL FILE FOUND!
                     echo "#######################################################";
@@ -628,8 +631,7 @@ function WriteVhostConfigFile()
 
                   $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
                   $line .= "################################################################" . fs_filehandler::NewLine();
-                  $line .= "</virtualhost>" . fs_filehandler::NewLine();
-                  $line .= fs_filehandler::NewLine();
+
                 }
 
 
