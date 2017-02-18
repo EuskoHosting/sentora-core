@@ -63,9 +63,6 @@ function executeCertBot($d1, $d2 = false){
     echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
     echo " --------------- " . "\n";
   }
-
-  if();
-
 }
 
 /**
