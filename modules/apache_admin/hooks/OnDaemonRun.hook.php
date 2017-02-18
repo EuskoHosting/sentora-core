@@ -34,7 +34,7 @@ function resolvableDomain($d){
 function executeCertBot($d1, $d2 = false){
   global $certbot_path;
   global $certbot_certpath;
-  
+
   $d1 = trim($d1);
   $d2 = trim($d2);
 
@@ -506,7 +506,7 @@ function WriteVhostConfigFile()
 
                 if($sslenabled){
                   $domain = $rowvhost['vh_name_vc'];
-                  $certpath = $certbot_path . $domain;
+                  $certpath = $certbot_certpath . $domain;
                   if(!is_dir($certpath) && resolvableDomain($domain)){
                     $serveralias = ( $rowvhost['vh_type_in'] == 2 ) ? '' : " www." . $rowvhost['vh_name_vc'];
                     executeCertBot($domain, $serveralias);
@@ -608,35 +608,30 @@ function WriteVhostConfigFile()
                 $line .= "# Custom VH settings (if any exist)" . fs_filehandler::NewLine();
                 $line .= $rowvhost['vh_custom_tx'] . fs_filehandler::NewLine();
 
+                $line .= "  SSLEngine on" .  fs_filehandler::NewLine();
+                $line .= "  SSLProtocol ALL -SSLv2 -SSLv3" .  fs_filehandler::NewLine();
+                $line .= "  SSLHonorCipherOrder On" .  fs_filehandler::NewLine();
+                $line .= "  SSLCipherSuite ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA" .  fs_filehandler::NewLine();;
+                $line .= "  SSLCertificateFile " . $certpath . "/cert.pem" .  fs_filehandler::NewLine();
+                $line .= "  SSLCertificateKeyFile " . $certpath . "/privkey.pem" .  fs_filehandler::NewLine();
+                $line .= "  SSLCertificateChainFile " . $certpath . "/chain.pem" .  fs_filehandler::NewLine();
+                //$line .= "  #SSLOptions +StrictRequire" .  fs_filehandler::NewLine();
+                //$line .= "  # Requires Apache >= 2.4" .  fs_filehandler::NewLine();
+                $line .= "  SSLCompression off" .  fs_filehandler::NewLine();
+                //$line .= "</If>" .  fs_filehandler::NewLine();
+                $line .= "</virtualhost>" . fs_filehandler::NewLine();
+                $line .= fs_filehandler::NewLine();
+              } else {
+                // ERROR!! No SSL FILE FOUND!
+                echo "-----------------" . "\n";
+                echo "CAUTION! NO CERT FOR " . $rowvhost['vh_name_vc']. "\n";
+              }
 
 
+              $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
+              $line .= "################################################################" . fs_filehandler::NewLine();
 
-                    $line .= "  SSLEngine on" .  fs_filehandler::NewLine();
-                    $line .= "  SSLProtocol ALL -SSLv2 -SSLv3" .  fs_filehandler::NewLine();
-                    $line .= "  SSLHonorCipherOrder On" .  fs_filehandler::NewLine();
-                    $line .= "  SSLCipherSuite ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA" .  fs_filehandler::NewLine();;
-                    $line .= "  SSLCertificateFile " . $certpath . "/cert.pem" .  fs_filehandler::NewLine();
-                    $line .= "  SSLCertificateKeyFile " . $certpath . "/privkey.pem" .  fs_filehandler::NewLine();
-                    $line .= "  SSLCertificateChainFile " . $certpath . "/chain.pem" .  fs_filehandler::NewLine();
-                    //$line .= "  #SSLOptions +StrictRequire" .  fs_filehandler::NewLine();
-                    //$line .= "  # Requires Apache >= 2.4" .  fs_filehandler::NewLine();
-                    $line .= "  SSLCompression off" .  fs_filehandler::NewLine();
-                    //$line .= "</If>" .  fs_filehandler::NewLine();
-                    $line .= "</virtualhost>" . fs_filehandler::NewLine();
-                    $line .= fs_filehandler::NewLine();
-                  } else {
-                    // ERROR!! No SSL FILE FOUND!
-                    echo "#######################################################" . "\n";
-                    echo "#####". "\n";
-                    echo "##### CAUTION! NO CERT FOR " . $rowvhost['vh_name_vc']. "\n";
-                    echo "#####". "\n";
-                  }
-
-
-                  $line .= "# END DOMAIN: " . $rowvhost['vh_name_vc'] . fs_filehandler::NewLine();
-                  $line .= "################################################################" . fs_filehandler::NewLine();
-
-                }
+            }
 
 
 
