@@ -167,7 +167,7 @@ function WriteVhostConfigFile()
     }
 
     if($sslenabled && is_dir($certpath)){
-      $line .= BuildVhostPortForward($domain, 443, $serveremail);
+      $line .= BuildVhostPortForward($domain, "443", $serveremail);
 
       $line .= fs_filehandler::NewLine();
       $line .= "# Configuration for Sentora control panel." . fs_filehandler::NewLine();
