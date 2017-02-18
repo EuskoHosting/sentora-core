@@ -1,6 +1,8 @@
 <?php
 
 $sslenabled = true;
+$certbot_path = "/usr/bin/certbot-auto";
+$certbot_certpath = "/etc/letsencrypt/live/";
 
 echo fs_filehandler::NewLine() . "START Apache Config Hook." . fs_filehandler::NewLine();
 if (ui_module::CheckModuleEnabled('Apache Config')) {
@@ -21,6 +23,50 @@ if (ui_module::CheckModuleEnabled('Apache Config')) {
     echo "Apache Admin module DISABLED...nothing to do." . fs_filehandler::NewLine();
 }
 echo "END Apache Config Hook." . fs_filehandler::NewLine();
+
+function resolvableDomain($d){
+  return (count(dns_get_record($d)) > 0);
+}
+
+function executeCertBot($d1, $d2 = false){
+  global $certbot_path;
+  global $certpath;
+  if(empty($d2) || $d2 === false){
+    $args = array(
+        "certonly",
+        "--apache",
+        "-d ".$d1,
+        "-n"
+    );
+    $resolvable = resolvableDomain($d1);
+    $d2 = "none";
+  } else {
+    $args = array(
+        "certonly",
+        "--apache",
+        "-d ".$d1,
+        "-d ".$d2,
+        "-n"
+    );
+    $resolvable = resolvableDomain($d1) && resolvableDomain($d2);
+  }
+
+  if(!$resolvable){
+    echo "---***---***---" . "\n";
+    echo "Domain '".$d1."' or '".$d2."' not resolvable" . "\n";
+    echo "---***---***---" . "\n";
+    return false;
+
+  } else {
+    echo "Executing certbot for '".$d1."' & '".$d2."' " . "\n";
+    echo " --------------- " . "\n";
+    echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
+    echo " --------------- " . "\n";
+  }
+
+  if();
+
+}
 
 /**
  *
@@ -51,7 +97,9 @@ function BuildVhostPortForward($vhostName, $customPort, $userEmail)
 function WriteVhostConfigFile()
 {
     global $zdbh;
-    $sslenabled = true;
+    global $certbot_certpath;
+    global $sslenabled;
+
     //Get email for server admin of Sentora
     $getserveremail = $zdbh->query("SELECT ac_email_vc FROM x_accounts where ac_id_pk=1")->fetch();
     $serveremail = ( $getserveremail['ac_email_vc'] != "" ) ? $getserveremail['ac_email_vc'] : "postmaster@" . ctrl_options::GetSystemOption('sentora_domain');
@@ -99,20 +147,11 @@ function WriteVhostConfigFile()
       $line .= "Listen 443" . fs_filehandler::NewLine();
     }
 
-    $certpath = "/etc/letsencrypt/live/" .  ctrl_options::GetSystemOption('sentora_domain');
+    $domain = ctrl_options::GetSystemOption('sentora_domain');
+    $certpath = $certbot_path . $domain;
 
-    if($sslenabled && !is_dir($certpath) && count(dns_get_record(ctrl_options::GetSystemOption('sentora_domain'))) > 0){
-      $certbot_path = "/usr/bin/certbot-auto";
-        $args = array(
-          "certonly",
-          "--apache",
-          "-d ".ctrl_options::GetSystemOption('sentora_domain'),
-          "-n"
-        );
-      echo "Executed certbot for " . ctrl_options::GetSystemOption('sentora_domain') . "\n";
-      echo " --------------- " . "\n";
-      echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
-      echo " --------------- " . "\n";
+    if($sslenabled && !is_dir($certpath) && count(dns_get_record($domain)) > 0){
+      executeCertBot(ctrl_options::GetSystemOption('sentora_domain'));
     }
 
     if($sslenabled && is_dir($certpath)){
@@ -454,46 +493,18 @@ function WriteVhostConfigFile()
               // SSL Auto Activated.
 
                 if($sslenabled){
-                  $certpath = "/etc/letsencrypt/live/" .  $rowvhost['vh_name_vc'];
-                  if(!is_dir($certpath) && count(dns_get_record($rowvhost['vh_name_vc'])) > 0){
-                    $command = ctrl_options::GetSystemOption('zsudo');
+                  $domain = $rowvhost['vh_name_vc'];
+                  $certpath = $certbot_path . $domain;
+                  if(!is_dir($certpath) && resolvableDomain($domain)){
                     $serveralias = ( $rowvhost['vh_type_in'] == 2 ) ? '' : " www." . $rowvhost['vh_name_vc'];
-                    $certbot_path = "/usr/bin/certbot-auto";
-                    if (empty($serveralias)){
-                      $args = array(
-                        "certonly",
-                        "--apache",
-                        "-d ".$rowvhost['vh_name_vc'],
-                        "-n"
-                      );
-                    } else {
-                      $args = array(
-                        "certonly",
-                        "--apache",
-                        "-d ".$rowvhost['vh_name_vc'],
-                        "-d ".$serveralias,
-                        "-n"
-                      );
-
-                    }
-                    echo "Executed certbot for " . $rowvhost["vh_name_vc"] . "\n";
-                    echo " --------------- " . "\n";
-                    echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
-                    echo " --------------- " . "\n";
-                  } else {
-                    echo " --------------- " . "\n";
-                    echo "Certbot ommited for " . $rowvhost["vh_name_vc"] . "\n";
-                    // echo " --------------- " . "\n";
+                    executeCertBot($domain, $serveralias);
                   }
-
                   /*
                     Start writing SSL config to vhost file
 
                   */
-                  //$line .= "<If \"-f '/etc/letsencrypt/live/" . $rowvhost['vh_name_vc'] . "/README'\">" . fs_filehandler::NewLine(); // If is not prepared for initial load. Not supported. So, must do it from PHP
 
-
-                  if(is_dir($certpath)){
+                  if(is_dir($certpath) && resolvableDomain($domain)){
 
 
                 $line .= "################################################################" . fs_filehandler::NewLine();
