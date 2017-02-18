@@ -30,7 +30,7 @@ function resolvableDomain($d){
 
 function executeCertBot($d1, $d2 = false){
   global $certbot_path;
-  global $certpath;
+  global $certbot_certpath;
   if(empty($d2) || $d2 === false){
     $args = array(
         "certonly",
@@ -62,6 +62,12 @@ function executeCertBot($d1, $d2 = false){
     echo " --------------- " . "\n";
     echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
     echo " --------------- " . "\n";
+    
+    if(is_dir($certbot_certpath . $d1)){
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
@@ -145,7 +151,7 @@ function WriteVhostConfigFile()
     }
 
     $domain = ctrl_options::GetSystemOption('sentora_domain');
-    $certpath = $certbot_path . $domain;
+    $certpath = $certbot_certpath . $domain;
 
     if($sslenabled && !is_dir($certpath) && count(dns_get_record($domain)) > 0){
       executeCertBot(ctrl_options::GetSystemOption('sentora_domain'));
