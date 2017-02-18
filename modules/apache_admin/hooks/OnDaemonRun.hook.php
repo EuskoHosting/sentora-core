@@ -1,4 +1,7 @@
 <?php
+global $sslenabled;
+global $certbot_path;
+global $certbot_certpath;
 
 $sslenabled = true;
 $certbot_path = "/usr/bin/certbot-auto";
@@ -62,7 +65,7 @@ function executeCertBot($d1, $d2 = false){
     echo " --------------- " . "\n";
     echo ctrl_system::systemCommand($certbot_path, $args) . "\n";
     echo " --------------- " . "\n";
-    
+
     if(is_dir($certbot_certpath . $d1)){
       return true;
     } else {
@@ -100,6 +103,7 @@ function BuildVhostPortForward($vhostName, $customPort, $userEmail)
 function WriteVhostConfigFile()
 {
     global $zdbh;
+    global $certbot_path;
     global $certbot_certpath;
     global $sslenabled;
 
