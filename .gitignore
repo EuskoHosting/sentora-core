@@ -1,2 +1,3 @@
 cnf/db.php
 cnf/security.php
+modules/webalizer_stats/stats/*
